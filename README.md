@@ -1,70 +1,30 @@
 # dbas-
 
-admins table
-  userid
-  department
-  phonenumber
+admins: userid, department, phonenumber
 
-author table
-  nookid
-  author
+author: bookid, author
 
-books table
-  bookid
-  title 
-  pages
+books: bookid, title, pages
 
-borrowing table
-  borrowingid
-  physicalid
-  userid
-  dob
-  dor
-  doe
+borrowing: borrowingid, physicalid, userid, dob, dor, doe
 
-edition table
-  bookid
-  isbn 
-  edition
-  publisher
-  dop
+edition: bookid, isbn, edition, publisher, dop
 
-fines table
-  borrowingid
-  amount
+fines: borrowingid; amount
   
-genre table
-  bookid
-  genre
+genre: bookid, genre
 
-language table
-  bookid
-  language
+language: bookid, language
 
-prequel tables
-  bookid
-  prequelid
+prequel: bookid, prequelid
 
-resources table
-  physicalid
-  bookid
-  damaged
+resources: physicalid, bookid, damaged
 
-students table
-  userid
-  program
+students: userid, program
 
-transaction table
-  transactionid
-  borrowingid
-  paymentmethod
-  dop
+transaction: transactionid, borrowingid, paymentmethod, dop
 
-users table
-  userid
-  name
-  address
-  email
+users: userid, name, address, email
 
 Assignment 1
 
@@ -188,6 +148,45 @@ ORDER BY
 ```
 
 Assignment 5
+
+```
+WITH RECURSIVE HarryPotterSeries AS (
+    SELECT 
+        b.bookid, 
+        b.title, 
+        p.prequelid 
+    FROM 
+        books b
+    LEFT JOIN 
+        prequels p ON b.bookid = p.bookid
+    WHERE 
+        b.title = 'Harry Potter and the Deathly Hallows'
+    UNION ALL
+    SELECT 
+        b.bookid, 
+        b.title, 
+        p.prequelid 
+    FROM 
+        books b
+    INNER JOIN 
+        prequels p ON b.bookid = p.bookid
+    INNER JOIN 
+        HarryPotterSeries hps ON p.bookid = hps.prequelid
+)
+SELECT
+    title,
+    bookid, 
+    prequelid
+    
+FROM 
+    HarryPotterSeries
+ORDER BY 
+    title;
+
+
+```
+
+Assigment P+
 
 ```
 
