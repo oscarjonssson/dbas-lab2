@@ -189,5 +189,25 @@ ORDER BY
 Assigment P+
 
 ```
-
+SELECT
+    a.author,
+    MAX(
+        CASE WHEN EXISTS (
+                SELECT 
+                  r.physicalid
+                FROM 
+                  resources r
+                JOIN 
+                  borrowing b ON r.physicalid = b.physicalid
+                WHERE 
+                  r.bookid = a.bookid
+                AND EXTRACT(MONTH FROM b.dor) = 5
+            ) THEN 1
+            ELSE 0
+        END
+    )::BOOLEAN AS "true/false"
+FROM
+    author a
+GROUP BY
+    a.author;
 ```
