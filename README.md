@@ -125,24 +125,65 @@ ORDER BY
 Assignment 3
 
 ```
+WITH Borrowed AS (
+    SELECT 
+        date_part('week', dob) AS week,
+        COUNT(*) AS borrowed_count
+    FROM 
+        borrowing
+    WHERE 
+        date_part('week', dob) BETWEEN 1 AND 30
+    GROUP BY 
+        week
+),
+Returned AS (
+    SELECT 
+        date_part('week', dor) AS week,
+        COUNT(*) AS returned_count,
+        COUNT(*) FILTER (WHERE dor > doe) AS late_count
+    FROM 
+        borrowing
+    WHERE 
+        date_part('week', dor) BETWEEN 1 AND 30
+    GROUP BY 
+        week
+)
 SELECT 
-    date_part('week', dob) AS week,
-    COUNT(borrowingid) FILTER (WHERE date_part('week', dob) BETWEEN 1 AND 30) AS borrowed,
-    COUNT(borrowingid) FILTER (WHERE date_part('week', dor) BETWEEN 1 AND 30) AS returned,
-    COUNT(borrowingid) FILTER (WHERE date_part('week', dor) BETWEEN 1 AND 30 AND dor > doe) AS late
+    COALESCE(b.week, r.week) AS week,
+    COALESCE(b.borrowed_count, 0) AS borrowed,
+    COALESCE(r.returned_count, 0) AS returned,
+    COALESCE(r.late_count, 0) AS late
 FROM 
-    borrowing
-WHERE 
-    date_part('week', dob) BETWEEN 1 AND 30 OR date_part('week', dor) BETWEEN 1 AND 30
-GROUP BY 
-    week
+    Borrowed b
+FULL OUTER JOIN 
+    Returned r ON b.week = r.week
 ORDER BY 
     week;
+
 ```
 
 Assignment 4
 
 ```
+SELECT
+    b.title,
+    EVERY(p.prequelid IS NOT NULL) AS EVERY,
+    bor.dob 
+FROM
+    books b
+JOIN
+    resources res ON b.bookid = res.bookid
+JOIN
+    borrowing bor ON res.physicalid = bor.physicalid
+LEFT JOIN
+    prequels p ON b.bookid = p.bookid
+WHERE
+    EXTRACT(MONTH FROM bor.dob) = 2
+GROUP BY
+    b.title, bor.dob
+ORDER BY
+    CAST(b.title AS BYTEA);
+
 
 ```
 
