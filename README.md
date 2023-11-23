@@ -151,43 +151,35 @@ Assignment 5
 
 ```
 WITH RECURSIVE HarryPotterSeries AS (
-    SELECT 
+    SELECT  
+        b.title,
         b.bookid, 
-        b.title, 
         p.prequelid 
     FROM 
         books b
     LEFT JOIN 
         prequels p ON b.bookid = p.bookid
     WHERE 
-        b.title = 'Harry Potter and the Deathly Hallows'
-    UNION ALL
+        b.bookid = '3747'
+
+    UNION
+
     SELECT 
+        b.title,
         b.bookid, 
-        b.title, 
         p.prequelid 
     FROM 
         books b
-    INNER JOIN 
+    LEFT JOIN 
         prequels p ON b.bookid = p.bookid
     INNER JOIN 
-        HarryPotterSeries hps ON p.bookid = hps.prequelid
+        HarryPotterSeries hps ON(b.bookid = hps.prequelid OR p.prequelid = hps.bookid)
 )
-SELECT
-    title,
-    bookid, 
-    prequelid
-    
-FROM 
-    HarryPotterSeries
-ORDER BY 
-    title;
+SELECT * FROM HarryPotterSeries;
 
 
 ```
-
-Assigment P+
-
+    
 ```
 SELECT
     a.author,
@@ -205,5 +197,15 @@ END
 FROM
     author a
 GROUP BY
-    a.author;
+    a.author
+ORDER BY
+  "true/false" DESC
+
 ```
+
+
+
+
+
+
+
