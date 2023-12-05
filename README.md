@@ -208,24 +208,26 @@ ORDER BY
 ### P
 
 #### Asingnment 1
-
+```
 SELECT C.Name AS Land,
        COUNT(B.Country2) AS number
 FROM Country AS C
 JOIN borders AS B ON C.Code = B.Country1 OR C.Code = B.Country2
 GROUP BY C.Name
 ORDER BY number DESC;
-
+```
 #### Assignment 2
-
+```
 SELECT S.Language, CAST(SUM(C.Population * (S.Percentage / 100)) AS INTEGER) AS TotalSpeakers
 FROM Country C
 JOIN Spoken S ON C.Code = S.Country
 GROUP BY S.Language
 ORDER BY TotalSpeakers DESC NULLS LAST, language;
 
-
+```
 #### Assignment 3
+
+```
 
 SELECT  b.Country1, 
     CAST(e1.GDP AS INT) as GDP1, 
@@ -237,41 +239,46 @@ FROM borders b
 JOIN Economy e1 ON b.Country1 = e1.Country
 JOIN Economy e2 ON b.Country2 = e2.Country
 ORDER BY ContrastRatio DESC NULLS LAST, contrastratio;
-
+```
 ### P+
 
 #### Assignment 1
-
+```
 WITH RECURSIVE BorderCrossings AS (
   -- Base case: countries directly bordering Sweden
   SELECT 
     b.Country2 AS Code, 
-    1 AS min 
+    c.Name,
+    1 AS min,
+    ARRAY['S', b.Country2] AS Path -- Assuming your SQL dialect supports arrays
   FROM borders b
-  WHERE b.Country1 = 'S' -- Assuming 'SWE' is the code for Sweden
+  JOIN Country c ON b.Country2 = c.Code
+  WHERE b.Country1 = 'S' -- 'S' is the code for Sweden
 
   UNION ALL
 
   -- Recursive case: countries reachable by crossing additional borders
   SELECT 
     b.Country2, 
-    bc.min + 1 
+    c.Name,
+    bc.min + 1,
+    bc.Path || b.Country2 -- Append the new country to the path
   FROM borders b
   JOIN BorderCrossings bc ON b.Country1 = bc.Code
-  WHERE bc.min < 5 AND b.Country2 != 'S' -- To avoid doubling back to Sweden
+  JOIN Country c ON b.Country2 = c.Code
+  WHERE bc.min < 5 AND NOT (b.Country2 = ANY(bc.Path)) -- Prevent doubling back
 )
 
 -- Final query to get the country names and minimal crossings
 SELECT 
-  c.Code, 
-  c.Name, 
+  bc.Code, 
+  bc.Name, 
   bc.min 
 FROM BorderCrossings bc
-JOIN Country c ON bc.Code = c.Code
-WHERE c.Code != 'S' -- Exclude Sweden itself
-ORDER BY bc.min, c.Code; -- Order by minimal crossings and country code
+WHERE bc.Code != 'S' -- Exclude Sweden itself
+ORDER BY bc.min, bc.Code; -- Order by minimal crossings and country code
 
-
+```
 
 
 
