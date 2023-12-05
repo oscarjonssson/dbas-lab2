@@ -214,7 +214,8 @@ SELECT C.Name AS Land,
 FROM Country AS C
 JOIN borders AS B ON C.Code = B.Country1 OR C.Code = B.Country2
 GROUP BY C.Name
-ORDER BY number DESC;
+HAVING COUNT(B.Country2) = 1
+ORDER BY number;
 ```
 #### Assignment 2
 ```
