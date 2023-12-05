@@ -244,45 +244,115 @@ ORDER BY ContrastRatio DESC NULLS LAST, contrastratio;
 
 #### Assignment 1
 ```
-WITH RECURSIVE BorderCrossings AS (
-  -- Base case: countries directly bordering Sweden
+WITH RECURSIVE PathFinder AS (
   SELECT 
-    b.Country2 AS Code, 
-    c.Name,
-    1 AS min,
-    ARRAY['S', b.Country2] AS Path -- Assuming your SQL dialect supports arrays
-  FROM borders b
-  JOIN Country c ON b.Country2 = c.Code
-  WHERE b.Country1 = 'S' -- 'S' is the code for Sweden
+    CASE 
+      WHEN b.Country1 = 'S' THEN b.Country2 
+      ELSE b.Country1 
+    END AS destination, 
+    1 AS steps, 
+    ARRAY['S'] AS route
+  FROM 
+    borders b
+  WHERE 
+    'S' = ANY(ARRAY[b.Country1, b.Country2])
 
   UNION ALL
 
-  -- Recursive case: countries reachable by crossing additional borders
   SELECT 
-    b.Country2, 
-    c.Name,
-    bc.min + 1,
-    bc.Path || b.Country2 -- Append the new country to the path
-  FROM borders b
-  JOIN BorderCrossings bc ON b.Country1 = bc.Code
-  JOIN Country c ON b.Country2 = c.Code
-  WHERE bc.min < 5 AND NOT (b.Country2 = ANY(bc.Path)) -- Prevent doubling back
+    CASE 
+      WHEN b.Country1 = pf.destination THEN b.Country2 
+      ELSE b.Country1 
+    END, 
+    pf.steps + 1, 
+    pf.route || ARRAY[CASE 
+                        WHEN b.Country1 = pf.destination THEN b.Country2 
+                        ELSE b.Country1 
+                      END]::text[]
+  FROM 
+    borders b
+  INNER JOIN 
+    PathFinder pf ON pf.destination IN (b.Country1, b.Country2)
+  WHERE 
+    pf.steps < 5
 )
 
--- Final query to get the country names and minimal crossings
 SELECT 
-  bc.Code, 
-  bc.Name, 
-  bc.min 
-FROM BorderCrossings bc
-WHERE bc.Code != 'S' -- Exclude Sweden itself
-ORDER BY bc.min, bc.Code; -- Order by minimal crossings and country code
+  pf.destination AS code,
+  c.Name,
+  MIN(pf.steps) AS shortest_path
+FROM 
+  PathFinder pf
+JOIN 
+  Country c ON pf.destination = c.Code
+WHERE 
+  pf.destination <> 'S'
+GROUP BY 
+  pf.destination, c.Name
+ORDER BY 
+  shortest_path, c.Name;
+
 
 ```
 
 
 
 #### Assignment 2
+
+```
+WITH Recursive RiverPaths AS (
+    SELECT 
+        r.Name AS PrimaryRiver,
+        '' AS AlternativePath,
+        r.Name AS CurrentPath,
+        1 AS Level,
+        1 AS RiverCount,
+        r.Length AS TotalLength
+    FROM 
+        River r
+    WHERE 
+        r.Name IN ('Nile', 'Amazonas', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT 
+        rp.PrimaryRiver,
+        CASE
+            WHEN rp.AlternativePath = '' THEN r.River
+            ELSE rp.AlternativePath || '-' || r.River
+        END AS AlternativePath,
+        r.Name AS CurrentPath,
+        rp.Level + 1 AS Level,
+        rp.RiverCount + 1 AS RiverCount,
+        rp.TotalLength + r.Length AS TotalLength
+    FROM 
+        River r
+        JOIN RiverPaths rp ON r.River = rp.CurrentPath
+),
+MaxRiverCounts AS (
+    SELECT 
+        PrimaryRiver,
+        MAX(RiverCount) AS MaxRiverCount
+    FROM RiverPaths
+    GROUP BY PrimaryRiver
+)
+
+SELECT 
+    RANK() OVER (ORDER BY rp.RiverCount) AS Rank,
+    rp.AlternativePath || '-' || rp.CurrentPath AS RiverPath,
+    rp.RiverCount AS RiverCount,
+    rp.TotalLength AS TotalLength
+FROM 
+    RiverPaths rp
+JOIN 
+    MaxRiverCounts mrc ON rp.PrimaryRiver = mrc.PrimaryRiver
+    AND rp.RiverCount = mrc.MaxRiverCount
+ORDER BY 
+    Rank,
+    TotalLength DESC;
+
+```
+
 
 
 
