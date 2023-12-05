@@ -226,19 +226,22 @@ ORDER BY TotalSpeakers DESC NULLS LAST, language;
 
 ```
 #### Assignment 3
-
+tar bort null värden för att det kan finnas länder vars gdp är null och därav anser vi att det inte är nödvändigt att ha med
 ```
 
 SELECT  b.Country1, 
-    CAST(e1.GDP AS INT) as GDP1, 
-    b.Country2, 
-    CAST(e2.GDP AS INT) as GDP2,(CASE
-    WHEN e1.GDP > e2.GDP THEN e1.GDP / e2.GDP
-    ELSE e2.GDP / e1.GDP END) AS ContrastRatio
+        CAST(e1.GDP AS INT) as GDP1, 
+        b.Country2, 
+        CAST(e2.GDP AS INT) as GDP2,
+        ROUND((CASE
+            WHEN e1.GDP > e2.GDP THEN e1.GDP / e2.GDP
+            ELSE e2.GDP / e1.GDP END), 0) AS ContrastRatio
 FROM borders b
 JOIN Economy e1 ON b.Country1 = e1.Country
 JOIN Economy e2 ON b.Country2 = e2.Country
-ORDER BY ContrastRatio DESC NULLS LAST, contrastratio;
+WHERE e1.GDP IS NOT NULL AND e2.GDP IS NOT NULL
+ORDER BY ContrastRatio DESC;
+
 ```
 ### P+
 
