@@ -218,7 +218,7 @@ ORDER BY number DESC;
 ```
 #### Assignment 2
 ```
-SELECT S.Language, CAST(SUM(C.Population * (S.Percentage / 100)) AS INTEGER) AS TotalSpeakers
+SELECT S.Language, COALESCE(CAST(SUM(C.Population * (S.Percentage / 100)) AS INTEGER),0) AS TotalSpeakers
 FROM Country C
 JOIN Spoken S ON C.Code = S.Country
 GROUP BY S.Language
