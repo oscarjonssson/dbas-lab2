@@ -60,7 +60,7 @@ CREATE TABLE Borrowing
 physicalID integer NOT NULL,
 userID integer REFERENCES Users (userID) NOT NULL,
 DoB DATE DEFAULT CURRENT_DATE NOT NULL,
-DoR DATE,
+DoR DATE CHECK (DoR >= DoB),
 DoE DATE DEFAULT CURRENT_DATE+7 NOT NULL);
 
 CREATE TYPE pMethod AS ENUM ('Klarna', 'Swish', 'Card','Cash');
