@@ -1,0 +1,78 @@
+DROP TABLE Books
+(bookID integer PRIMARY KEY,
+title varchar(100),
+pages integer);
+
+DROP TABLE Resources
+(physicalID integer PRIMARY KEY,
+bookID integer,
+damaged BOOLEAN DEFAULT false);
+
+DROP TABLE Prequels
+(bookID INTEGER,
+prequelID INTEGER,
+PRIMARY KEY (bookID,prequelID));
+
+DROP TABLE Edition
+(bookID INTEGER,
+ISBN varchar(20),
+edition Integer,
+publisher varchar(100),
+DoP Date,
+PRIMARY KEY (bookID));
+
+DROP TABLE Author
+(bookID integer,
+author varchar(100),
+PRIMARY KEY (bookID, author));
+
+DROP TABLE Genre
+(bookID integer,
+genre varchar(100),
+PRIMARY KEY (bookID, genre));
+
+DROP TABLE Language
+(bookID INTEGER,
+language varchar(100),
+PRIMARY KEY (bookID, language));
+
+DROP TABLE Users
+(userID integer PRIMARY KEY,
+name varchar(100),
+address varchar(100),
+email varchar(50));
+
+DROP TABLE Students
+(userID integer,
+program varchar(100),
+PRIMARY KEY (userID)
+);
+
+DROP TABLE Admins
+(userID integer,
+department varchar(100),
+phoneNumber varchar(15),
+PRIMARY KEY (userID)
+);
+
+DROP TABLE Borrowing
+(borrowingID Integer PRIMARY KEY,
+physicalID integer,
+userID integer,
+DoB DATE DEFAULT CURRENT_DATE,
+DoR DATE,
+DoE DATE DEFAULT CURRENT_DATE+7);
+
+DROP TYPE pMethod AS ENUM ('Klarna', 'Swish', 'Card','Cash');
+
+DROP TABLE Fines
+(borrowingID integer,
+Amount integer,
+PRIMARY KEY (borrowingID));
+ 
+DROP TABLE TRANSACTIONS
+(transactionID integer PRIMARY KEY,
+ borrowingID integer,
+ paymentMethod pMethod,
+ DoP DATE
+ );
