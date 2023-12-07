@@ -40,7 +40,7 @@ CREATE TABLE Users
 (userID integer PRIMARY KEY,
 name varchar(100) NOT NULL,
 address varchar(100) NOT NULL,
-email varchar(50) NOT NULL  CHECK (email LIKE '%@kth.se'));
+email varchar(50) NOT NULL CHECK (email LIKE '%@kth.se'));
 
 CREATE TABLE Students
 (userID integer REFERENCES Users (userID) NOT NULL,
