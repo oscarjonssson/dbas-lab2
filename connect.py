@@ -38,18 +38,5 @@ def get_physical_books_by_title():
     print(result)
 
 if __name__ == "__main__":
-    # Example:
-    # Execute a query which returns all genres including the genre id.
-    cur.execute("SELECT * from genre ")
-
-    # Print the first row returned.
-    print(cur.fetchone())
-    
-    # Print the next row returned.
-    print(cur.fetchone())
-    
-    # Print all the remaining rows returned.
-    print(cur.fetchall())
-    
-    # Close the connection to the database.
-    conn.close()
+    get_book_title_by_genre()
+    get_physical_books_by_title()
