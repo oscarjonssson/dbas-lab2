@@ -29,6 +29,14 @@ def get_book_title_by_genre():
 
     print(titles)
 
+# function to Show all physical books with a given title.
+def get_physical_books_by_title():
+    title = input("Please enter a title: ")
+    query = f"SELECT Resources.physicalID, Books.title FROM Resources JOIN Books ON Resources.bookID = Books.bookID WHERE Books.title = '{title}'"
+    cur.execute(query)
+    result = cur.fetchall()
+    print(result)
+
 if __name__ == "__main__":
     # Example:
     # Execute a query which returns all genres including the genre id.
