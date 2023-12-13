@@ -10,9 +10,9 @@ Remember to follow best practices for secure coding in production environments.
 # Acquire a connection to the database by specifying the credentials.
 conn = psycopg2.connect(
     host="psql-dd1368-ht23.sys.kth.se", 
-    database="--Please fill--",
-    user="--Please fill--",
-    password="--Please fill--")
+    database="oscjonss",
+    user="oscjonss",
+    password="g3MBYp2i")
 print(conn)
 
 # Create a cursor. The cursor allows you to execute database queries.
