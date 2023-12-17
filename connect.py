@@ -39,14 +39,24 @@ def get_physical_books_by_title():
 
 # function to Show a list of titles and how many physical copies are available (i.e. all copiesthat are not borrowed).
 def get_available_physical_books():
-    query = f"SELECT Books.title, COUNT(Resources.physicalID) AS AvailableCopies FROM Books LEFT JOIN Resources ON Books.bookID = Resources.bookID LEFT JOIN Borrowing ON Resources.physicalID = Borrowing.physicalID WHERE Borrowing.physicalID IS NULL GROUP BY Books.title"
-    cur.execute(query)
+    query = """SELECT b.title, COUNT(DISTINCT r.physicalID) - COUNT(DISTINCT CASE WHEN bor.dor IS NULL THEN r.physicalid END) AS available_copies
+                FROM books b
+                LEFT JOIN resources r ON b.bookID = r.bookid
+                LEFT JOIN (
+                    SELECT physicalid, MAX(dob) AS max_borrow_date
+                    FROM borrowing
+                    GROUP BY physicalid
+                ) AS latest_borrowings ON r.physicalid = latest_borrowings.physicalid
+                LEFT JOIN borrowing bor ON latest_borrowings.physicalid = bor.physicalid AND latest_borrowings.max_borrow_date = bor.dob
+                GROUP BY b.title
+                ORDER BY b.title"""
     result = cur.fetchall()
     print(result)
 
 
 if __name__ == "__main__":
-    get_available_physical_books()
+    
     get_book_title_by_genre()
     get_physical_books_by_title()
+    get_available_physical_books()
     
