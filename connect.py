@@ -58,7 +58,10 @@ def get_available_physical_books():
 def is_student(user_id):
     cur.execute("SELECT * FROM students WHERE userid = %s", (user_id,))
     result = cur.fetchone()
-    return result
+    if len(result) > 0:
+        return True
+    else:
+        return False
 
 # function to check if the user has any fines
 
