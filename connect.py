@@ -55,8 +55,8 @@ def get_available_physical_books():
 
 
 if __name__ == "__main__":
-    
+    get_available_physical_books()
     get_book_title_by_genre()
     get_physical_books_by_title()
-    get_available_physical_books()
+    
     
