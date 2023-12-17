@@ -50,6 +50,7 @@ def get_available_physical_books():
                 LEFT JOIN borrowing bor ON latest_borrowings.physicalid = bor.physicalid AND latest_borrowings.max_borrow_date = bor.dob
                 GROUP BY b.title
                 ORDER BY b.title"""
+    cur.execute(query)
     result = cur.fetchall()
     print(result)
 
