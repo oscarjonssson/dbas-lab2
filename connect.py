@@ -1,5 +1,6 @@
 import psycopg2
 from datetime import datetime, timedelta
+import sys
 
 """
 Note: It's essential never to include database credentials in code pushed to GitHub. 
@@ -32,7 +33,7 @@ def get_book_title_by_genre():
 
     print(titles)
 
-# function to Show all physical books with a given title.
+# Show all physical books with a given title.
 def get_physical_books_by_title():
     title = input("Please enter a title: ")
     query = """ SELECT Resources.physicalID,
@@ -44,7 +45,7 @@ def get_physical_books_by_title():
     result = cur.fetchall()
     print(result)
 
-# function to Show a list of titles and how many physical copies are available (i.e. all copiesthat are not borrowed).
+# Show a list of titles and how many physical copies are available (i.e. all copiesthat are not borrowed).
 def get_available_physical_books():
     query = """ SELECT b.title,
                 COUNT(DISTINCT r.physicalid) - COUNT(DISTINCT CASE
@@ -66,6 +67,7 @@ def get_available_physical_books():
     result = cur.fetchall()
     print(result)
 
+# Checks if a user is a student, return true if so.
 def is_student(user_id):
     query = """ SELECT userID
                 FROM students
@@ -76,6 +78,7 @@ def is_student(user_id):
     else:
         return True
     
+# Checks if a user has outstanding fines, return true if so.
 def has_fines(user_id):
     query = """ SELECT Fines.borrowingID
                 FROM Fines
@@ -89,6 +92,7 @@ def has_fines(user_id):
     else: 
         return False
 
+# Checks if a user has borrowed more than 4 book, return True if so.
 def borrowed_books(user_id):
     query = """ SELECT borrowingID
                 FROM borrowing
@@ -101,23 +105,67 @@ def borrowed_books(user_id):
     else:
         return False
 
+# Checks if a user can borrow a specific book by its ISBN, returns True if so.
+# Checks both if a user has borrowed it more than 5 times, and if it is avaliable for borrowing.
 def ISBN_availability(user_id, ISBN):
-    cur.execute("SELECT e.ISBN FROM Books b JOIN Edition e ON b.bookID = e.bookID JOIN Resources r ON b.bookID = r.bookID JOIN Borrowing bor ON r.physicalID = bor.physicalID WHERE bor.userID = %s AND e.isbn = %s", (user_id, ISBN))
+    query = """ SELECT e.ISBN
+                FROM Books b
+                JOIN Edition e ON b.bookID = e.bookID
+                JOIN Resources r ON b.bookID = r.bookID
+                JOIN Borrowing bor ON r.physicalID = bor.physicalID
+                WHERE bor.userID = %s
+                    AND e.isbn = %s""", (user_id, ISBN)
+    cur.execute(query)
     if len(cur.fetchall()) >= 6:
         print("You cannot borrow this book again.")
         return False
-    cur.execute("SELECT r.physicalID FROM Books b LEFT JOIN Resources r ON b.bookID = r.bookID LEFT JOIN Edition e ON b.bookID = e.bookID LEFT JOIN (SELECT physicalID, MAX(DoB) AS max_borrow_date FROM Borrowing GROUP BY physicalID) AS latest_borrowings ON r.physicalID = latest_borrowings.physicalID LEFT JOIN Borrowing bor ON latest_borrowings.physicalID = bor.physicalID AND latest_borrowings.max_borrow_date = bor.DoB WHERE e.isbn = %s AND (bor.DoR IS NOT NULL OR latest_borrowings.physicalID IS NULL) AND r.physicalID IS NOT NULL", (ISBN,))
+    
+    query = """ SELECT r.physicalID
+                FROM Books b
+                LEFT JOIN Resources r ON b.bookID = r.bookID
+                LEFT JOIN Edition e ON b.bookID = e.bookID 
+                LEFT JOIN
+                    (SELECT physicalID,
+                        MAX(DoB) AS max_borrow_date
+                    FROM Borrowing
+                    GROUP BY physicalID) AS latest_borrowings ON r.physicalID = latest_borrowings.physicalID
+                LEFT JOIN Borrowing bor ON latest_borrowings.physicalID = bor.physicalID
+                AND latest_borrowings.max_borrow_date = bor.DoB
+                WHERE e.isbn = %s
+                    AND (bor.DoR IS NOT NULL
+                        OR latest_borrowings.physicalID IS NULL)
+                    AND r.physicalID IS NOT NULL""", (ISBN,)
+    cur.execute(query)
     if len(cur.fetchall()) < 1:
         print("This book is not available for borrowing.")
         return False
-    else: return True
+    
+    return True
 
+# Adds a book to the borrowing table.
 def insert_borrowing(user_id, ISBN):
-    cur.execute("SELECT r.physicalID FROM Books b LEFT JOIN Resources r ON b.bookID = r.bookID LEFT JOIN Edition e ON b.bookID = e.bookID LEFT JOIN (SELECT physicalID, MAX(DoB) AS max_borrow_date FROM Borrowing GROUP BY physicalID) AS latest_borrowings ON r.physicalID = latest_borrowings.physicalID LEFT JOIN Borrowing bor ON latest_borrowings.physicalID = bor.physicalID AND latest_borrowings.max_borrow_date = bor.DoB WHERE e.isbn = %s AND (bor.DoR IS NOT NULL OR latest_borrowings.physicalID IS NULL) AND r.physicalID IS NOT NULL", (ISBN,))
+    query = """ SELECT r.physicalID
+                FROM Books b
+                LEFT JOIN Resources r ON b.bookID = r.bookID
+                LEFT JOIN Edition e ON b.bookID = e.bookID 
+                LEFT JOIN
+                    (SELECT physicalID,
+                        MAX(DoB) AS max_borrow_date
+                    FROM Borrowing
+                    GROUP BY physicalID) AS latest_borrowings ON r.physicalID = latest_borrowings.physicalID
+                LEFT JOIN Borrowing bor ON latest_borrowings.physicalID = bor.physicalID
+                AND latest_borrowings.max_borrow_date = bor.DoB
+                WHERE e.isbn = %s
+                    AND (bor.DoR IS NOT NULL
+                        OR latest_borrowings.physicalID IS NULL)
+                    AND r.physicalID IS NOT NULL""", (ISBN,)
+    cur.execute(query)
     physical_copies = cur.fetchall()
     physical_id = physical_copies[0]
 
-    cur.execute("SELECT borrowingID FROM borrowing")
+    query = """ SELECT borrowingID
+                FROM borrowing"""
+    cur.execute(query)
     ID_list = cur.fetchall()
     borrowing_id = max(ID_list, key=lambda x: x[0])[0] + 1
 
@@ -126,16 +174,21 @@ def insert_borrowing(user_id, ISBN):
     dob = current_date_time.date()
     doe = dob + timedelta(days=7)
 
-    cur.execute("INSERT INTO Borrowing(BorrowingID,physicalID,userID,DoB,DoR,DoE) VALUES(%s, %s, %s, %s, %s, %s)",(borrowing_id, physical_id, user_id, dob, None, doe))
+    query = """ INSERT INTO Borrowing(BorrowingID,physicalID,userID,DoB,DoR,DoE)
+                VALUES(%s, %s, %s, %s, %s, %s)""", (borrowing_id, physical_id, user_id, dob, None, doe,)
+    cur.execute("")
 
     print("Return the book by:", doe)
     conn.commit()
 
 
-
+# Lets a user borrow a book.
 def borrow_book():
     email = input("Email: ")
-    cur.execute("SELECT userID FROM users WHERE email = %s", (email,))
+    query = """ SELECT userID
+                FROM users
+                WHERE email = %s""", (email,)
+    cur.execute(query)
     user_id = cur.fetchone()
 
     if user_id:
@@ -151,13 +204,37 @@ def borrow_book():
     else:
         print("Invalid email.")
 
-
-
+# Main function.
 if __name__ == "__main__":
-    borrow_book()
-    get_available_physical_books()
-    get_book_title_by_genre()
-    get_physical_books_by_title()
-    borrow_book()
-    
-    
+    while True:
+        print("Select an option: ")
+        print("0: Quit")
+        print("1. Show books by genre")
+        print("2. Show books by title")
+        print("3. Show all books")
+        print("4. Borrow book")
+
+        option = int(input("- "))
+
+        if option == 0:
+            sys.exit
+        elif option == 1:
+            get_book_title_by_genre()
+        elif option == 2:
+            get_physical_books_by_title()
+        elif option == 3:
+            get_available_physical_books()
+        elif option == 4:
+            borrow_book()
+        
+        #match option:
+        #    case 0:
+        #        sys.exit()
+        #    case 1:
+        #        get_book_title_by_genre()
+        #    case 2:
+        #        get_physical_books_by_title()
+        #    case 3:
+        #        get_available_physical_books()
+        #    case 4:
+        #        borrow_book()
