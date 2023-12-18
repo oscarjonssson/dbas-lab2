@@ -154,8 +154,10 @@ def borrow_book():
 
 
 if __name__ == "__main__":
+    borrow_book()
     get_available_physical_books()
     get_book_title_by_genre()
     get_physical_books_by_title()
     borrow_book()
+    
     
